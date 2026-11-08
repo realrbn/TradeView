@@ -4,7 +4,7 @@ A Minecraft mod that shows a villager's **future trades** for every level it has
 right in the trading screen. It also adds auto-trading, trade rerolling, an enchanted-book finder
 and an optional "unlimited trades" mode.
 
-![Preview](docs/preview.png)
+![Preview](docs/preview_new.png)
 
 ## Supported versions
 
