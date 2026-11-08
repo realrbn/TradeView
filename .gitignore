@@ -1,0 +1,43 @@
+# --- Gradle ---
+.gradle/
+build/
+out/
+.kotlin/
+!gradle/wrapper/gradle-wrapper.jar
+
+# --- Minecraft-Entwicklungsumgebung (Welten, Logs, Configs der Testclients) ---
+run/
+runs/
+.dev/
+logs/
+crash-reports/
+
+# --- Stonecutter: generierte Versionsordner nur mit Build-Output ---
+# (versions/*/gradle.properties und die Legacy-Forge-Projekte bleiben erhalten)
+versions/*/build/
+versions/*/run/
+versions/*/.gradle/
+
+# --- IDEs ---
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+bin/
+.fleet/
+
+# --- Betriebssystem ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Sonstiges ---
+*.log
+*.tmp
+*.class
+local.properties
+.env

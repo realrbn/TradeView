@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "tradeview_validation",
+  "version": "1.0.0",
+  "name": "TradeView validation fixture",
+  "environment": "client",
+  "entrypoints": {"client": ["de.tradeview.validation.ClientValidation"]},
+  "depends": {"tradeview": "*"}
+}

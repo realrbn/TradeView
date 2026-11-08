@@ -1,0 +1,26 @@
+license="MIT"
+
+[[mixins]]
+config="tradeview.mixins.json"
+
+[[mods]]
+modId="tradeview"
+version="${version}"
+displayName="TradeView"
+authors="realrbn"
+description='''Preview future villager trades, automate trading, and enable unlimited trades. Includes Trade Cycling and modded trade support.'''
+iconFile="assets/tradeview/icon.png"
+
+[[dependencies.tradeview]]
+modId="minecraft"
+type="required"
+versionRange="[${minecraft_version}]"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.tradeview]]
+modId="neoforge"
+type="required"
+versionRange="[${neoforge_version},)"
+ordering="NONE"
+side="BOTH"

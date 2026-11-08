@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "tradeview",
+  "version": "${version}",
+  "name": "TradeView",
+  "authors": ["realrbn"],
+  "description": "Preview future villager trades, automate trading, and enable unlimited trades. Includes Trade Cycling and modded trade support.",
+  "icon": "assets/tradeview/icon.png",
+  "environment": "*",
+  "license": "MIT",
+  "entrypoints": {
+    "main": ["de.tradeview.TradeViewFabric"],
+    "client": ["de.tradeview.client.TradeViewFabricClient"],
+    "modmenu": ["de.tradeview.client.TradeViewModMenu"]
+  },
+  "mixins": ["tradeview-legacy.mixins.json"],
+  "depends": {"fabricloader": ">=${loader_version}", "minecraft": "${minecraft_version}", "java": ">=${java_version}", "fabric-api": ">=${fabric_api_version}"},
+  "suggests": {"modmenu": "*"}
+}

@@ -1,0 +1,104 @@
+plugins {
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'org.spongepowered.mixin' version '0.7.+'
+}
+
+group = 'de.tradeview'
+version = "${mod_version}-1.20.1-forge"
+base { archivesName = 'tradeview' }
+
+def repositoryRoot = file('../..')
+sourceSets.main {
+    // Loader-independent 1.20.1 code is shared with the Fabric build.
+    java.srcDir "${repositoryRoot}/src/common-1.20.1/java"
+    java.srcDir "${repositoryRoot}/src/forge-1.20.1/java"
+    resources.srcDir "${repositoryRoot}/src/common/resources"
+    resources.srcDir "${repositoryRoot}/src/common-1.20.1/resources"
+    resources.srcDir "${repositoryRoot}/src/forge-1.20.1/resources"
+}
+
+// Scripted client run (real world, villager and trade screen): gradlew runClient -PtradeviewValidation
+// The fixture is its own mod jar in a separate game directory, so it never reaches the distributable JAR.
+def validationRun = hasProperty('tradeviewValidation') ? file('build/run/validation') : file('run')
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+    runs {
+        client { workingDirectory validationRun; mods { tradeview { source sourceSets.main } } }
+        server { workingDirectory file('run'); mods { tradeview { source sourceSets.main } } }
+    }
+}
+
+// Forge 1.20.1 does not ship MixinExtras; it is nested as a Jar-in-Jar mod, as FML resolves it from META-INF/jarjar.
+configurations { bundled { transitive = false } }
+
+dependencies {
+    minecraft "net.minecraftforge:forge:1.20.1-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
+    annotationProcessor "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
+    implementation "io.github.llamalad7:mixinextras-forge:${mixinextras_version}"
+    bundled "io.github.llamalad7:mixinextras-forge:${mixinextras_version}"
+}
+
+mixin {
+    add sourceSets.main, 'tradeview.refmap.json'
+    config 'tradeview-legacy.mixins.json'
+}
+
+processResources {
+    def props = [version: mod_version, minecraft_version: '1.20.1', forge_version: forge_version, java_version: '17']
+    inputs.properties props
+    filesMatching(['META-INF/mods.toml', 'tradeview-legacy.mixins.json']) { expand props }
+    // The shared config has no refmap; Forge 1.20.1 runs on SRG names and needs it.
+    filesMatching('tradeview-legacy.mixins.json') {
+        filter { line -> line.contains('"package"') ? line + '\n  "refmap": "tradeview.refmap.json",' : line }
+    }
+    exclude 'tradeview.mixins.json'
+}
+
+def jarJarMetadata = tasks.register('jarJarMetadata') {
+    def output = layout.buildDirectory.file('nestedJars/META-INF/jarjar/metadata.json')
+    inputs.property 'version', mixinextras_version
+    outputs.file output
+    doLast {
+        def jar = configurations.bundled.singleFile.name
+        output.get().asFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson([jars: [[
+            identifier: [group: 'io.github.llamalad7', artifact: 'mixinextras-forge'],
+            version: [range: "[${mixinextras_version},)", artifactVersion: mixinextras_version],
+            path: "META-INF/jarjar/${jar}", isObfuscated: false]]]))
+    }
+}
+
+sourceSets.create('validation') {
+    java.srcDir "${repositoryRoot}/src/validation-forge-1.20.1/java"
+    resources.srcDir "${repositoryRoot}/src/validation-forge-1.20.1/resources"
+    compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+}
+def validationJar = tasks.register('validationJar', Jar) {
+    from sourceSets.validation.output
+    archiveClassifier = 'validation'
+    destinationDirectory = layout.buildDirectory.dir('validation')
+}
+if (hasProperty('tradeviewValidation')) {
+    def installValidation = tasks.register('installValidation', Copy) {
+        from validationJar
+        into file('build/run/validation/mods')
+    }
+    tasks.matching { it.name == 'runClient' }.configureEach { dependsOn installValidation }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+java { withSourcesJar() }
+tasks.named('jar', Jar) {
+    dependsOn jarJarMetadata
+    from(layout.buildDirectory.dir('nestedJars'))
+    from(configurations.bundled) { into 'META-INF/jarjar' }
+}
+tasks.matching { it.name in ['jar', 'sourcesJar'] }.configureEach {
+    manifest.attributes('MixinConfigs': 'tradeview-legacy.mixins.json')
+    from("${repositoryRoot}/LICENSE") { rename { 'LICENSE_tradeview' } }
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "tradeview-test",
+  "version": "1.0.0",
+  "name": "TradeView integration tests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": ["de.tradeview.TradeViewGameTest", "de.tradeview.UnlimitedTradesGameTest", "de.tradeview.update.UpdateCheckerGameTest", "de.tradeview.ModdedTradesGameTest", "de.tradeview.TradeRerollGameTest", "de.tradeview.ReliableRemoverGameTest", "de.tradeview.TradeFindGameTest"],
+    "fabric-client-gametest": ["de.tradeview.AutoTradeClientTest", "de.tradeview.TradeViewClientTest", "de.tradeview.HeroCompatibilityClientTest", "de.tradeview.TradeRerollClientTest"]
+  },
+  "mixins": ["tradeview-test.mixins.json"]
+}

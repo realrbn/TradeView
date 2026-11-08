@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[52,)"
+license="MIT"
+
+[[mods]]
+modId="tradeview"
+version="${version}"
+displayName="TradeView"
+authors="realrbn"
+description='''Preview future villager trades, automate trading, and enable unlimited trades. Includes Trade Cycling and modded trade support.'''
+logoFile="assets/tradeview/icon.png"
+
+[[dependencies.tradeview]]
+modId="forge"
+mandatory=true
+versionRange="[${forge_version},)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.tradeview]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.21.1,1.21.2)"
+ordering="NONE"
+side="BOTH"

@@ -1,0 +1,94 @@
+plugins {
+    id 'java'
+    id 'net.minecraftforge.gradle' version '[7.0.40,8)'
+}
+
+group = 'de.tradeview'
+version = "${mod_version}-${minecraft_version}-forge"
+base { archivesName = 'tradeview' }
+
+def repositoryRoot = file('../..')
+sourceSets.main {
+    // Loader-independent 26.x code is shared with the Fabric and NeoForge builds; the Forge entrypoints with 26.2 and 26.3.
+    java.srcDir "${repositoryRoot}/src/common/java"
+    java.srcDir "${repositoryRoot}/src/forge/java"
+    resources.srcDir "${repositoryRoot}/src/common/resources"
+    resources.srcDir "${repositoryRoot}/src/forge/resources"
+}
+
+minecraft {
+    runs {
+        configureEach {
+            workingDir = layout.projectDirectory.dir('run')
+            systemProperty 'eventbus.api.strictRuntimeChecks', 'true'
+            // The MixinConfigs manifest entry only applies to the built JAR, not to the dev class directories.
+            args '--mixin.config=tradeview.mixins.json'
+        }
+        register('client')
+        register('server') { args '--nogui' }
+    }
+}
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+
+dependencies {
+    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
+    annotationProcessor "net.minecraftforge:eventbus-validator:${eventbus_validator_version}"
+}
+
+// Scripted client run (real world, villager and trade screen): gradlew runClient -PtradeviewValidation
+// The fixture is its own mod jar in a separate game directory, so it never reaches the distributable JAR.
+sourceSets.create('validation') {
+    java.srcDir "${repositoryRoot}/src/validation-forge/java"
+    resources.srcDir "${repositoryRoot}/src/validation-forge/resources"
+    compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+}
+def validationJar = tasks.register('validationJar', Jar) {
+    from sourceSets.validation.output
+    archiveClassifier = 'validation'
+    destinationDirectory = layout.buildDirectory.dir('validation')
+}
+if (hasProperty('tradeviewValidation')) {
+    def validationRun = layout.buildDirectory.dir('run/validation')
+    minecraft.runs.named('client') { workingDir = validationRun }
+    def installValidation = tasks.register('installValidation', Copy) {
+        from validationJar
+        into validationRun.map { it.dir('mods') }
+    }
+    tasks.matching { it.name == 'runClient' }.configureEach { dependsOn installValidation }
+}
+
+processResources {
+    def props = [version: version.toString(), forge_version: forge_version, forge_major: forge_version.tokenize('.')[0],
+        minecraft_range: minecraft_range, pack_format: pack_format, mixin_level: 'JAVA_21', mixin_min_version: '0.8']
+    inputs.properties props
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) { expand props }
+    exclude 'tradeview-legacy.mixins.json'
+    // Forge 26.x ships Mixin 0.8.7, which only knows compatibility levels up to JAVA_21 and asks for a minVersion.
+    filesMatching('tradeview.mixins.json') {
+        filter { it.replace('"JAVA_25"', "\"${props.mixin_level}\"").replace('"required": true,', "\"required\": true, \"minVersion\": \"${props.mixin_min_version}\",") }
+    }
+}
+// Forge 26.x warns about mod jars without a valid pack.mcmeta, which would stop the scripted run.
+processValidationResources {
+    inputs.property 'pack_format', pack_format
+    filesMatching('pack.mcmeta') { expand pack_format: pack_format }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+}
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
+    withSourcesJar()
+}
+tasks.matching { it.name in ['jar', 'sourcesJar'] }.configureEach {
+    manifest.attributes('MixinConfigs': 'tradeview.mixins.json')
+    from("${repositoryRoot}/LICENSE") { rename { 'LICENSE_tradeview' } }
+}

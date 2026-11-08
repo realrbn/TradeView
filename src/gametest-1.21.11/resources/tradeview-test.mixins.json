@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "de.tradeview.testmixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": ["TestVillagerAccessor", "TestTradeExtensionMixin"],
+  "injectors": {"defaultRequire": 1}
+}

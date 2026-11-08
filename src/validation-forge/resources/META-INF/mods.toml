@@ -1,0 +1,15 @@
+modLoader="javafml"
+loaderVersion="[65,)"
+license="MIT"
+
+[[mods]]
+modId="tradeview_validation"
+version="1.0.0"
+displayName="TradeView validation fixture"
+
+[[dependencies.tradeview_validation]]
+modId="tradeview"
+mandatory=true
+versionRange="*"
+ordering="AFTER"
+side="CLIENT"
